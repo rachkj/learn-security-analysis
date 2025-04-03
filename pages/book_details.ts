@@ -1,9 +1,8 @@
-import Book  from '../models/book';
-import BookInstance, { IBookInstance }  from '../models/bookinstance';
+import Book from '../models/book';
+import BookInstance, { IBookInstance } from '../models/bookinstance';
 import express from 'express';
 
 const router = express.Router();
-
 
 /**
  * @route GET /book_dtls
@@ -15,6 +14,18 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   const id = req.query.id as string;
+
+  const escapeHtml = (unsafe: string): string => {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const safeId = escapeHtml(id);
+
   try {
     const [book, copies] = await Promise.all([
       Book.getBook(id),
@@ -22,7 +33,7 @@ router.get('/', async (req, res) => {
     ]);
 
     if (!book) {
-      res.status(404).send(`Book ${id} not found`);
+      res.status(404).send(`Book ${safeId} not found`);
       return;
     }
 
@@ -33,7 +44,7 @@ router.get('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching book:', err);
-    res.status(500).send(`Error fetching book ${id}`);
+    res.status(500).send(`Error fetching book ${safeId}`);
   }
 });
 
